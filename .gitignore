@@ -1,0 +1,4 @@
+/.egg2nix-cache/
+*~
+/result
+.egg2nix-cache
