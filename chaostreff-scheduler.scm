@@ -141,3 +141,9 @@ exec csi -s "$0" "$@"
         (print (call-with-input-pipe "git add -A && git commit -q -m 'chaostreff scheduled' && git push" read-all))))
 
   (print "done"))
+
+
+
+;; Local Variables:
+;; mode: scheme
+;; End:
