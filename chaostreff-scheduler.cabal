@@ -1,0 +1,56 @@
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0f6b29c2d291308029089b306a301d81ac38e7b03435ad76335ec9d0dab6e2dd
+
+name:           chaostreff-scheduler
+version:        0.0.1
+synopsis:       schedule chaostreff events
+license:        MIT
+build-type:     Simple
+cabal-version:  >= 1.10
+
+executable chaostreff-scheduler
+  main-is: Main.hs
+  other-modules:
+      ChaostreffScheduler
+      DayOfWeek
+      Event
+      Lektor
+      Paths_chaostreff_scheduler
+  hs-source-dirs:
+      src
+  default-extensions: OverloadedStrings, NoImplicitPrelude
+  ghc-options: -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-signatures -fprint-potential-instances
+  build-depends:
+      base
+    , directory
+    , filepath
+    , megaparsec
+    , process
+    , protolude
+    , text
+    , time
+    , unix
+  default-language: Haskell2010
+
+test-suite doctest
+  type: exitcode-stdio-1.0
+  main-is: doctest.hs
+  other-modules:
+      Paths_chaostreff_scheduler
+  default-extensions: OverloadedStrings, NoImplicitPrelude
+  ghc-options: -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-signatures -fprint-potential-instances
+  build-depends:
+      base
+    , directory
+    , doctest
+    , filepath
+    , megaparsec
+    , process
+    , protolude
+    , text
+    , time
+    , unix
+  default-language: Haskell2010

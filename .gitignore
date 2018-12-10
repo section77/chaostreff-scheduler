@@ -2,3 +2,7 @@
 *~
 /result
 .egg2nix-cache
+dist
+dist-newstyle
+.ghc.environment*
+token
