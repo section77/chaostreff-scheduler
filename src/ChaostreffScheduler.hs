@@ -6,7 +6,7 @@ module ChaostreffScheduler where
 import Protolude
 import Unsafe (unsafeHead)
 import Data.Time
-import Data.List (groupBy, concat)
+import Data.List ((!!), groupBy, concat)
 
 import Lektor
 import Event
@@ -20,6 +20,7 @@ schedule = do
   gitCheckout
   scheduleChaostreffs
   scheduleTechEvents
+  scheduleFreiesHacken
   gitCommitAndPush
 
 
@@ -46,6 +47,13 @@ scheduleTechEvents = do
   mapM_ createLektorCalendarEntry events
 
 
+scheduleFreiesHacken :: (MonadIO m, MonadReader AppCfg m) => m ()
+scheduleFreiesHacken = do
+  template <- loadLektorEventTemplate "contents-freies-hacken.tmpl"
+  dates <- freiesHackenDates
+  let events = fmap (\d -> template { eventTitle = "Freies Hacken", eventDate = d }) dates
+  mapM_ createLektorCalendarEntry events
+
 
 -- |
 -- >>> runReaderT chaostreffDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
@@ -65,12 +73,23 @@ techEventDates = (withTime <$> unsafeHead . filter ((== Saturday) . dayOfWeek)) 
   where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
 
 
+
+-- | 'Freies Hacken' dates - every second (odd) month, the third saturday
+freiesHackenDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
+freiesHackenDates = filter isOddMonth <$> (withTime . third . filter isSaturday) <$$> range
+  where isSaturday = (== Saturday) . dayOfWeek
+        third xs = xs !! 2
+        withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
+        isOddMonth (toGregorian . utctDay -> (_, m, _)) = odd m
+
+
+
+
 (<$$>) :: (Functor f1, Functor f2) => (a -> b) -> f1 (f2 a) -> f1 (f2 b)
 (<$$>) = fmap . fmap
 
 
-
--- | creates a range of days depending on the given config
+-- | creates a range of days grouped by month depending on the given config
 range :: (MonadIO m, MonadReader AppCfg m) => m [[Day]]
 range = do
   (Year y, Month m, MonthCount c) <- (,,) <$> asks cfgRunForYear <*> asks cfgRunForMonth <*> asks cfgMonthCount

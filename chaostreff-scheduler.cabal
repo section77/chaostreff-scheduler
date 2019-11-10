@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fb85852c643d90b2eeb093502183d0063f28d54da71c0a82059c20b599c1ec0c
+-- hash: 426c1e36de95abda8cd456b016f88aa4e436b72dbdcab5bb8f19d8f53e77d757
 
 name:           chaostreff-scheduler
-version:        0.0.2
+version:        0.0.3
 synopsis:       schedule chaostreff events
 license:        MIT
 build-type:     Simple
