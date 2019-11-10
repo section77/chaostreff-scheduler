@@ -1,22 +1,26 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0f6b29c2d291308029089b306a301d81ac38e7b03435ad76335ec9d0dab6e2dd
+-- hash: fb85852c643d90b2eeb093502183d0063f28d54da71c0a82059c20b599c1ec0c
 
 name:           chaostreff-scheduler
-version:        0.0.1
+version:        0.0.2
 synopsis:       schedule chaostreff events
 license:        MIT
 build-type:     Simple
-cabal-version:  >= 1.10
 
 executable chaostreff-scheduler
   main-is: Main.hs
   other-modules:
+      AppCfg
+      Args
       ChaostreffScheduler
       DayOfWeek
       Event
+      Git
       Lektor
       Paths_chaostreff_scheduler
   hs-source-dirs:
@@ -28,6 +32,7 @@ executable chaostreff-scheduler
     , directory
     , filepath
     , megaparsec
+    , optparse-applicative
     , process
     , protolude
     , text
@@ -48,6 +53,7 @@ test-suite doctest
     , doctest
     , filepath
     , megaparsec
+    , optparse-applicative
     , process
     , protolude
     , text

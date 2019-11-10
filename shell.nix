@@ -5,21 +5,23 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, directory, doctest, filepath, hpack
-      , megaparsec, process, protolude, stdenv, text, time, unix
+      , megaparsec, optparse-applicative, process, protolude, stdenv
+      , text, time, unix
       }:
       mkDerivation {
         pname = "chaostreff-scheduler";
-        version = "0.0.1";
+        version = "0.0.2";
         src = ./.;
         isLibrary = false;
         isExecutable = true;
         libraryToolDepends = [ hpack ];
         executableHaskellDepends = [
-          base directory filepath megaparsec process protolude text time unix
+          base directory filepath megaparsec optparse-applicative process
+          protolude text time unix
         ];
         testHaskellDepends = [
-          base directory doctest filepath megaparsec process protolude text
-          time unix
+          base directory doctest filepath megaparsec optparse-applicative
+          process protolude text time unix
         ];
         preConfigure = "hpack";
         description = "schedule chaostreff events";

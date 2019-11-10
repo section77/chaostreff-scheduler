@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
 module ChaostreffScheduler where
@@ -10,59 +11,70 @@ import Data.List (groupBy, concat)
 import Lektor
 import Event
 import DayOfWeek
+import AppCfg
+import Git
 
-newtype Year = Year Integer
-newtype Month = Month Int
-newtype MonthCount = MonthCount Int
 
+schedule :: (MonadIO m, MonadReader AppCfg m) => m ()
+schedule = do
+  gitCheckout
+  scheduleChaostreffs
+  scheduleTechEvents
+  gitCommitAndPush
 
 
 -- |
-scheduleChaostreffs :: Year -> Month -> MonthCount -> IO ()
-scheduleChaostreffs y m c = do
+scheduleChaostreffs :: (MonadIO m, MonadReader AppCfg m) => m ()
+scheduleChaostreffs = do
   template <- loadLektorEventTemplate "contents-chaostreff.tmpl"
 
-  let dates = chaostreffDates y m c
-      events = fmap (\d -> template { eventTitle = "Chaostreff", eventDate = d }) dates
+  dates <- chaostreffDates
+  let events = fmap (\d -> template { eventTitle = "Chaostreff", eventDate = d }) dates
 
   mapM_ createLektorCalendarEntry events
 
 
 
 -- |
-scheduleTechEvents :: Year -> Month -> MonthCount -> IO ()
-scheduleTechEvents y m c = do
+scheduleTechEvents :: (MonadIO m, MonadReader AppCfg m) => m ()
+scheduleTechEvents = do
   template <- loadLektorEventTemplate "contents-tech-event.tmpl"
 
-  let dates = techEventDates y m c
-      events = fmap (\d -> template { eventTitle = "Tech-Event", eventDate = d }) dates
+  dates <- techEventDates
+  let events = fmap (\d -> template { eventTitle = "Tech-Event", eventDate = d }) dates
 
   mapM_ createLektorCalendarEntry events
 
 
 
 -- |
--- >>> chaostreffDates (Year 2019) (Month 1) (MonthCount 2)
--- [2019-01-01 20:00:00 UTC,2019-01-15 20:00:00 UTC,2019-01-29 20:00:00 UTC,2019-02-12 20:00:00 UTC,2019-02-26 20:00:00 UTC]
-chaostreffDates :: Year -> Month -> MonthCount -> [UTCTime]
-chaostreffDates y m c = fmap withTimes . filterOdds . concat $ filter ((== Tuesday) . dayOfWeek) <$> range y m c
-  where withTimes d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
+-- >>> runReaderT chaostreffDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
+-- [2019-02-05 20:00:00 UTC,2019-02-19 20:00:00 UTC,2019-03-05 20:00:00 UTC,2019-03-19 20:00:00 UTC]
+chaostreffDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
+chaostreffDates = fmap withTime . concat <$> (filterOdds . filter ((== Tuesday) . dayOfWeek)) <$$> range
+  where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
         filterOdds = fmap snd . filter (odd . fst) . zip [1..]
 
 
 
 -- |
--- >>> techEventDates (Year 2019) (Month 1) (MonthCount 4)
+-- >>> runReaderT techEventDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 1) (MonthCount 4)
 -- [2019-01-05 14:00:00 UTC,2019-02-02 14:00:00 UTC,2019-03-02 14:00:00 UTC,2019-04-06 14:00:00 UTC]
-techEventDates :: Year -> Month -> MonthCount -> [UTCTime]
-techEventDates y m c = fmap withTimes  $ unsafeHead <$> filter ((== Saturday) . dayOfWeek) <$> range y m c
-  where withTimes d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
+techEventDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
+techEventDates = (withTime <$> unsafeHead . filter ((== Saturday) . dayOfWeek)) <$$> range
+  where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
+
+
+(<$$>) :: (Functor f1, Functor f2) => (a -> b) -> f1 (f2 a) -> f1 (f2 b)
+(<$$>) = fmap . fmap
 
 
 
--- | creates a range of days starting with the given year and month over the given count of months
-range :: Year -> Month -> MonthCount -> [[Day]]
-range (Year y) (Month m) (MonthCount n) = take n $ groupByMonth $ days (fromGregorian y m 1)
+-- | creates a range of days depending on the given config
+range :: (MonadIO m, MonadReader AppCfg m) => m [[Day]]
+range = do
+  (Year y, Month m, MonthCount c) <- (,,) <$> asks cfgRunForYear <*> asks cfgRunForMonth <*> asks cfgMonthCount
+  pure $ take c $ groupByMonth $ days (fromGregorian y m 1)
   where days d = d : days (addDays 1 d)
         month (toGregorian -> (_, m, _)) = m
         groupByMonth = groupBy (\d1 d2 -> month d1 == month d2)

@@ -1,27 +1,27 @@
 name: chaostreff-scheduler
-version: 0.0.1
+version: 0.0.2
 synopsis: schedule chaostreff events
 license: MIT
 
 ghc-options: -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wmissing-signatures -fprint-potential-instances
+
 default-extensions: OverloadedStrings, NoImplicitPrelude
 
 dependencies:
   - base
+  - directory
+  - filepath
+  - megaparsec
+  - optparse-applicative
+  - process
   - protolude
   - text
   - time
-  - megaparsec
   - unix
-  - directory
-  - filepath
-  - process
-
 
 executable:
   main: Main.hs
   source-dirs: src
-
 
 tests:
   doctest:

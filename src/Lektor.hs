@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 module Lektor where
 
@@ -12,7 +13,7 @@ import System.FilePath ((</>), (<.>), takeDirectory)
 import System.Directory (createDirectoryIfMissing,doesFileExist, getCurrentDirectory)
 
 import Event
-
+import AppCfg
 
 
 class LektorContent a where
@@ -23,7 +24,7 @@ type Parser = Parsec Void Text
 
 instance LektorContent Event where
 
-  fromLektorContent = first (toS . parseErrorPretty) . parse lektorContent "parse 'Event' from lektor content"
+  fromLektorContent = first (toS . errorBundlePretty) . parse lektorContent "parse 'Event' from lektor content"
     where lektorContent :: Parser (Maybe Event)
           lektorContent = do
             model <- model
@@ -43,7 +44,7 @@ instance LektorContent Event where
           body = string' "body:" *> space *> textBlock
 
           line = takeWhileP Nothing (/= '\n') <* eol
-          lines = T.pack <$> manyTill anyChar (string "----")
+          lines = T.pack <$> manyTill anySingle (string "----")
           sep = string "---" *> eol
           textBlock = string' "#### text-block ####" *> eol *> space *> string' "text:" *> space *> lines
 
@@ -62,14 +63,15 @@ instance LektorContent Event where
 
 
 
-createLektorCalendarEntry :: Event -> IO ()
+createLektorCalendarEntry :: (MonadIO m, MonadReader AppCfg m) => Event -> m ()
 createLektorCalendarEntry event@(Event{..}) = do
-  basePath <- (</> "website/content/kalender") <$> getCurrentDirectory
+  workDir <- asks cfgWorkDir
+  basePath <- (</> (workDir </> "content/kalender")) <$> liftIO getCurrentDirectory
   let path = basePath </> formatTime defaultTimeLocale "%Y/%Y-%m-%d/contents.lr" eventDate
       content = toLektorContent event
 
   putText $ "schedule " <> eventTitle <> " (" <> show eventDate <> ")"
-  ifM (doesFileExist path)
+  liftIO $ ifM (doesFileExist path)
     (putText "  event exists")
     (ifM (doesFileExist $ path <.> "ignore")
       (putText "  contents.lr.ignore file exists - don't schedule the event")
@@ -81,12 +83,12 @@ createLektorCalendarEntry event@(Event{..}) = do
 
 
 -- |
-loadLektorEventTemplate :: Text -> IO Event
+loadLektorEventTemplate :: (MonadIO m, MonadReader AppCfg m) => Text -> m Event
 loadLektorEventTemplate name = do
-  pwd <- getCurrentDirectory
-  let path = pwd </> "website/templates/chaostreff-scheduler" </> toS name
-  content <- readFile path
+  workDir <- asks cfgWorkDir
+  basePath <- (</> (workDir </> "templates/chaostreff-scheduler")) <$> liftIO getCurrentDirectory
+  content <- liftIO $ readFile (basePath </> toS name)
   case fromLektorContent content of
     (Right (Just event)) -> pure event
-    (Right Nothing)      -> die "invalid template - file doesn't contain a 'Event' template"
-    (Left msg)           -> die msg
+    (Right Nothing)      -> liftIO $ die "invalid template - file doesn't contain a 'Event' template"
+    (Left msg)           -> liftIO $ die msg
