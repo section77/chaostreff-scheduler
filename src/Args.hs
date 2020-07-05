@@ -20,7 +20,7 @@ parseArgs = do
   execParser $ opts y m
   where opts y m = info (helper <*> args y m)
                  (    fullDesc
-                   <> progDesc ("chaostreff-scheduler - schedule chaostreffs")
+                   <> progDesc ("chaostreff-scheduler - schedule chaostreff events")
                    <> header   ("chaostreff-schedluer - version: " <> showVersion version))
 
 
