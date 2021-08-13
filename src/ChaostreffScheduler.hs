@@ -21,6 +21,7 @@ schedule = do
   scheduleChaostreffs
 --  scheduleTechEvents
 --  scheduleFreiesHacken
+  schedule3DDD
   gitCommitAndPush
 
 
@@ -55,6 +56,14 @@ scheduleFreiesHacken = do
   mapM_ createLektorCalendarEntry events
 
 
+schedule3DDD :: (MonadIO m, MonadReader AppCfg m) => m ()
+schedule3DDD = do
+  template <- loadLektorEventTemplate "contents-3ddd.tmpl"
+  dates <- dddDates
+  let events = fmap (\d -> template { eventTitle = "3D-Drucker-Donnerstag", eventDate = d }) dates
+  mapM_ createLektorCalendarEntry events
+
+
 -- |
 -- >>> runReaderT chaostreffDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
 -- [2019-02-05 20:00:00 UTC,2019-02-19 20:00:00 UTC,2019-03-05 20:00:00 UTC,2019-03-19 20:00:00 UTC]
@@ -82,6 +91,15 @@ freiesHackenDates = filter isOddMonth <$> (withTime . third . filter isSaturday)
         withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
         isOddMonth (toGregorian . utctDay -> (_, m, _)) = odd m
 
+
+-- | '3DDD' dates - every third thursday
+-- >>> runReaderT dddDates $ AppCfg "" "" NoPushChanges  (Year 2021) (Month 8) (MonthCount 2)
+-- [2021-08-19 20:00:00 UTC,2021-09-16 20:00:00 UTC]
+dddDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
+dddDates = (withTime . third . filter isThursday) <$$> range
+  where isThursday = (== Thursday) . dayOfWeek
+        third xs = xs !! 2
+        withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
 
 
 
