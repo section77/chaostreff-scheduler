@@ -19,7 +19,7 @@ schedule :: (MonadIO m, MonadReader AppCfg m) => m ()
 schedule = do
   gitCheckout
   scheduleChaostreffs
---  scheduleTechEvents
+  scheduleTechEvents
 --  scheduleFreiesHacken
   schedule3DDD
   gitCommitAndPush
