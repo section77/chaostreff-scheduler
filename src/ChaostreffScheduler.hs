@@ -4,13 +4,11 @@
 module ChaostreffScheduler where
 
 import Protolude
-import Unsafe (unsafeHead)
 import Data.Time
-import Data.List ((!!), groupBy, concat)
+import Data.List ((!!), groupBy, concat, head)
 
 import Lektor
 import Event
-import DayOfWeek
 import AppCfg
 import Git
 
@@ -78,7 +76,7 @@ chaostreffDates = fmap withTime . concat <$> (filterOdds . filter ((== Tuesday) 
 -- >>> runReaderT techEventDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 1) (MonthCount 4)
 -- [2019-01-05 14:00:00 UTC,2019-02-02 14:00:00 UTC,2019-03-02 14:00:00 UTC,2019-04-06 14:00:00 UTC]
 techEventDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-techEventDates = (withTime <$> unsafeHead . filter ((== Saturday) . dayOfWeek)) <$$> range
+techEventDates = (withTime <$> Data.List.head . filter ((== Saturday) . dayOfWeek)) <$$> range
   where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
 
 

@@ -1,8 +1,11 @@
 let
-  pkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/20.03.tar.gz";
-    sha256 = "0182ys095dfx02vl2a20j1hz92dx3mfgz2a6fhn31bqlp1wa8hlq";
-  }) {};
+
+  pkgs = import (builtins.fetchGit {
+    name = "nixos-21.05";
+    url = "https://github.com/nixos/nixpkgs/";
+    ref = "refs/heads/nixos-21.05";
+    rev = "a1007637cea374bd1bafd754cfd5388894c49129";
+    }) {};
 
   drv = pkgs.haskellPackages.callPackage ./chaostreff-scheduler.nix {};
 in
