@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Lektor where
 
-import Protolude hiding ((<.>))
+import Protolude hiding ((<.>), hPutStrLn)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Error
@@ -11,6 +11,8 @@ import qualified Data.Text as T
 import qualified Data.List as L
 import System.FilePath ((</>), (<.>), takeDirectory)
 import System.Directory (createDirectoryIfMissing,doesFileExist, getCurrentDirectory)
+import System.Environment
+import System.IO (hGetContents, hPutStrLn, hSetEncoding, latin1)
 
 import Event
 import AppCfg
@@ -78,7 +80,9 @@ createLektorCalendarEntry event@(Event{..}) = do
       (do
           putText $ "  create event (" <> toS path <> ")"
           createDirectoryIfMissing True $ takeDirectory path
-          writeFile path content))
+          withFile (toS path) WriteMode (\h -> do
+                                            hSetEncoding h latin1
+                                            hPutStrLn h (toS content))))
 
 
 
@@ -87,8 +91,11 @@ loadLektorEventTemplate :: (MonadIO m, MonadReader AppCfg m) => Text -> m Event
 loadLektorEventTemplate name = do
   workDir <- asks cfgWorkDir
   basePath <- (</> (workDir </> "templates/chaostreff-scheduler")) <$> liftIO getCurrentDirectory
-  content <- liftIO $ readFile (basePath </> toS name)
-  case fromLektorContent content of
+  content <- liftIO $ withFile (basePath </> toS name) ReadMode (\h -> do
+    hSetEncoding h latin1
+    content <- hGetContents h
+    return $!! content)
+  case fromLektorContent (toS content) of
     (Right (Just event)) -> pure event
     (Right Nothing)      -> liftIO $ die "invalid template - file doesn't contain a 'Event' template"
     (Left msg)           -> liftIO $ die msg
