@@ -68,7 +68,7 @@ schedule3DDD = do
 chaostreffDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
 chaostreffDates = fmap withTime . concat <$> (filterOdds . filter ((== Tuesday) . dayOfWeek)) <$$> range
   where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
-        filterOdds = fmap snd . zip [1..]
+        filterOdds = fmap snd . filter (odd . fst) . zip [1..]
 
 
 
