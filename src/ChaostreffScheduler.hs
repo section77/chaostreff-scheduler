@@ -66,9 +66,8 @@ schedule3DDD = do
 -- >>> runReaderT chaostreffDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
 -- [2019-02-05 20:00:00 UTC,2019-02-19 20:00:00 UTC,2019-03-05 20:00:00 UTC,2019-03-19 20:00:00 UTC]
 chaostreffDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-chaostreffDates = fmap withTime . concat <$> (filterOdds . filter ((== Tuesday) . dayOfWeek)) <$$> range
+chaostreffDates = fmap withTime . concat <$> (filter ((== Tuesday) . dayOfWeek)) <$$> range
   where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
-        filterOdds = fmap snd . filter (odd . fst) . zip [1..]
 
 
 
