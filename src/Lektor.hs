@@ -70,6 +70,8 @@ createLektorCalendarEntry event@(Event{..}) = do
   workDir <- asks cfgWorkDir
   basePath <- (</> (workDir </> "content/kalender")) <$> liftIO getCurrentDirectory
   let path = basePath </> formatTime defaultTimeLocale "%Y/%Y-%m-%d/contents.lr" eventDate
+      yearContentsPath = basePath </> formatTime defaultTimeLocale "%Y/contents.lr" eventDate
+      yearContentsContent = formatTime defaultTimeLocale "_model: calendar\n---\ntitle: %Y\n---" eventDate
       content = toLektorContent event
 
   putText $ "schedule " <> eventTitle <> " (" <> show eventDate <> ")"
@@ -78,8 +80,18 @@ createLektorCalendarEntry event@(Event{..}) = do
     (ifM (doesFileExist $ path <.> "ignore")
       (putText "  contents.lr.ignore file exists - don't schedule the event")
       (do
-          putText $ "  create event (" <> toS path <> ")"
           createDirectoryIfMissing True $ takeDirectory path
+
+          -- create the %Y/contents.lr file if necessary
+          ifM (doesFileExist yearContentsPath)
+            (putText "  year contents.lr exists")
+            (do
+                putText $ "  creating year contents.lr (" <> toS yearContentsPath <> ")"
+                withFile (toS yearContentsPath) WriteMode (\h -> do
+                                                              hSetEncoding h latin1
+                                                              hPutStrLn h (toS yearContentsContent)))
+          -- create the event
+          putText $ "  create event (" <> toS path <> ")"
           withFile (toS path) WriteMode (\h -> do
                                             hSetEncoding h latin1
                                             hPutStrLn h (toS content))))
