@@ -19,7 +19,7 @@ schedule = do
   scheduleChaostreffs
   scheduleTechEvents
 --  scheduleFreiesHacken
-  schedule3DDD
+--  schedule3DDD
   gitCommitAndPush
 
 
