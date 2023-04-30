@@ -34,7 +34,7 @@ instance LektorContent Event where
               "event" -> Just <$> (Event
                                  <$> title
                                  <*> date
-                                 <*> (end <* type)
+                                 <*> (end <* tpe)
                                  <*> url
                                  <*> body)
               _ -> pure Nothing
@@ -43,7 +43,7 @@ instance LektorContent Event where
           title = string' "title:" *> space *> line <* sep
           date = (string' "date:" *> space *> line >>= parseTimeM True defaultTimeLocale "%F %R" . toS) <* sep
           end = (string' "end:" *> space *> line >>= parseTimeM True defaultTimeLocale "%F %R" . toS) <* sep
-          type = string' "type:" *> space *> line <* sep
+          tpe = string' "type:" *> space *> line <* sep
           url = string' "url:" *> space *> line <* sep
           body = string' "body:" *> space *> textBlock
 
