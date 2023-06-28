@@ -20,7 +20,7 @@ import AppCfg
 
 class LektorContent a where
   fromLektorContent :: Text -> Either Text (Maybe a)
-  toLektorContent :: a -> Text
+  toLektorContent :: a -> Day -> Text
 
 type Parser = Parsec Void Text
 
@@ -54,11 +54,11 @@ instance LektorContent Event where
 
 
 
-  toLektorContent Event{..} = T.unlines $ T.unwords <$> L.intersperse ["---"]
+  toLektorContent Event{..} day = T.unlines $ T.unwords <$> L.intersperse ["---"]
     [ [ "_model: event" ]
     , [ "title:", eventTitle ]
-    , [ "date:", showUTCTime eventDate]
-    , [ "end:", showUTCTime eventEnd]
+    , [ "date:", showUTCTime $ UTCTime day (utctDayTime eventDate)]
+    , [ "end:", showUTCTime $ UTCTime day (utctDayTime eventEnd)]
     , [ "type: Event"]
     , [ "url:", eventUrl]
     , [ "body:\n#### text-block ####\n", "text:", eventText]
@@ -68,16 +68,16 @@ instance LektorContent Event where
 
 
 
-createLektorCalendarEntry :: (MonadIO m, MonadReader AppCfg m) => Event -> m ()
-createLektorCalendarEntry event@(Event{..}) = do
+createLektorCalendarEntry :: (MonadIO m, MonadReader AppCfg m) => Event -> Day -> m ()
+createLektorCalendarEntry event day = do
   workDir <- asks cfgWorkDir
   basePath <- (</> (workDir </> "content/kalender")) <$> liftIO getCurrentDirectory
-  let path = basePath </> formatTime defaultTimeLocale "%Y/%Y-%m-%d/contents.lr" eventDate
-      yearContentsPath = basePath </> formatTime defaultTimeLocale "%Y/contents.lr" eventDate
-      yearContentsContent = formatTime defaultTimeLocale "_model: calendar\n---\ntitle: %Y\n---" eventDate
-      content = toLektorContent event
+  let path = basePath </> formatTime defaultTimeLocale "%Y/%Y-%m-%d/contents.lr" day
+      yearContentsPath = basePath </> formatTime defaultTimeLocale "%Y/contents.lr" day
+      yearContentsContent = formatTime defaultTimeLocale "_model: calendar\n---\ntitle: %Y\n---" day
+      content = toLektorContent event day
 
-  putText $ "schedule " <> eventTitle <> " (" <> show eventDate <> ")"
+  putText $ "schedule " <> eventTitle event <> " (" <> show day <> ")"
   liftIO $ ifM (doesFileExist path)
     (putText "  event exists")
     (ifM (doesFileExist $ path <.> "ignore")

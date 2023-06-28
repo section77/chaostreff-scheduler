@@ -27,11 +27,8 @@ schedule = do
 scheduleChaostreffs :: (MonadIO m, MonadReader AppCfg m) => m ()
 scheduleChaostreffs = do
   template <- loadLektorEventTemplate "contents-chaostreff.tmpl"
-
-  dates <- chaostreffDates
-  let events = fmap (\d -> template { eventTitle = "Chaostreff", eventDate = d }) dates
-
-  mapM_ createLektorCalendarEntry events
+  days <- chaostreffDays
+  mapM_ (createLektorCalendarEntry $ template { eventTitle = "Chaostreff"}) days
 
 
 
@@ -39,64 +36,55 @@ scheduleChaostreffs = do
 scheduleTechEvents :: (MonadIO m, MonadReader AppCfg m) => m ()
 scheduleTechEvents = do
   template <- loadLektorEventTemplate "contents-tech-event.tmpl"
-
-  dates <- techEventDates
-  let events = fmap (\d -> template { eventTitle = "Tech-Event", eventDate = d }) dates
-
-  mapM_ createLektorCalendarEntry events
+  days <- techEventDays
+  mapM_ (createLektorCalendarEntry $ template { eventTitle = "Tech-Event"}) days
 
 
 scheduleFreiesHacken :: (MonadIO m, MonadReader AppCfg m) => m ()
 scheduleFreiesHacken = do
   template <- loadLektorEventTemplate "contents-freies-hacken.tmpl"
-  dates <- freiesHackenDates
-  let events = fmap (\d -> template { eventTitle = "Freies Hacken", eventDate = d }) dates
-  mapM_ createLektorCalendarEntry events
+  days <- techEventDays
+  mapM_ (createLektorCalendarEntry $ template { eventTitle = "Freies Hacken"}) days
 
 
 schedule3DDD :: (MonadIO m, MonadReader AppCfg m) => m ()
 schedule3DDD = do
   template <- loadLektorEventTemplate "contents-3ddd.tmpl"
-  dates <- dddDates
-  let events = fmap (\d -> template { eventTitle = "3D-Drucker-Donnerstag", eventDate = d }) dates
-  mapM_ createLektorCalendarEntry events
+  days <- dddDays
+  mapM_ (createLektorCalendarEntry $ template { eventTitle = "3D-Drucker-Donnerstag"}) days
 
 
 -- |
--- >>> runReaderT chaostreffDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
--- [2019-02-05 20:00:00 UTC,2019-02-12 20:00:00 UTC,2019-02-19 20:00:00 UTC,2019-02-26 20:00:00 UTC,2019-03-05 20:00:00 UTC,2019-03-12 20:00:00 UTC,2019-03-19 20:00:00 UTC,2019-03-26 20:00:00 UTC]
-chaostreffDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-chaostreffDates = fmap withTime . concat <$> (filter ((== Tuesday) . dayOfWeek)) <$$> range
-  where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
+-- >>> runReaderT chaostreffDays $ AppCfg "" "" NoPushChanges (Year 2019) (Month 2) (MonthCount 2)
+-- [2019-02-05,2019-02-12,2019-02-19,2019-02-26,2019-03-05,2019-03-12,2019-03-19,2019-03-26]
+chaostreffDays :: (MonadIO m, MonadReader AppCfg m) => m [Day]
+chaostreffDays = concat <$> (filter ((== Tuesday) . dayOfWeek)) <$$> range
 
 
 
 -- |
--- >>> runReaderT techEventDates $ AppCfg "" "" NoPushChanges (Year 2019) (Month 1) (MonthCount 4)
--- [2019-01-05 14:00:00 UTC,2019-02-02 14:00:00 UTC,2019-03-02 14:00:00 UTC,2019-04-06 14:00:00 UTC]
-techEventDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-techEventDates = (withTime <$> Data.List.head . filter ((== Saturday) . dayOfWeek)) <$$> range
-  where withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
+-- >>> runReaderT techEventDays $ AppCfg "" "" NoPushChanges (Year 2019) (Month 1) (MonthCount 4)
+-- [2019-01-05,2019-02-02,2019-03-02,2019-04-06]
+techEventDays :: (MonadIO m, MonadReader AppCfg m) => m [Day]
+techEventDays = (Data.List.head . filter ((== Saturday) . dayOfWeek)) <$$> range
 
 
 
 -- | 'Freies Hacken' dates - every second (odd) month, the third saturday
-freiesHackenDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-freiesHackenDates = filter isOddMonth <$> (withTime . third . filter isSaturday) <$$> range
+freiesHackenDays :: (MonadIO m, MonadReader AppCfg m) => m [Day]
+freiesHackenDays = filter isOddMonth <$> (third . filter isSaturday) <$$> range
   where isSaturday = (== Saturday) . dayOfWeek
         third xs = xs !! 2
-        withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 14 0 0)
-        isOddMonth (toGregorian . utctDay -> (_, m, _)) = odd m
+        isOddMonth (toGregorian -> (_, m, _)) = odd m
 
 
 -- | '3DDD' dates - every third thursday
--- >>> runReaderT dddDates $ AppCfg "" "" NoPushChanges  (Year 2021) (Month 8) (MonthCount 2)
--- [2021-08-19 20:00:00 UTC,2021-09-16 20:00:00 UTC]
-dddDates :: (MonadIO m, MonadReader AppCfg m) => m [UTCTime]
-dddDates = (withTime . third . filter isThursday) <$$> range
+-- >>> runReaderT dddDays $ AppCfg "" "" NoPushChanges  (Year 2021) (Month 8) (MonthCount 2)
+-- [2021-08-19,2021-09-16]
+dddDays :: (MonadIO m, MonadReader AppCfg m) => m [Day]
+dddDays = (third . filter isThursday) <$$> range
   where isThursday = (== Thursday) . dayOfWeek
         third xs = xs !! 2
-        withTime d = UTCTime d (timeOfDayToTime $ TimeOfDay 20 0 0)
 
 
 
