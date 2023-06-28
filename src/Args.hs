@@ -5,7 +5,7 @@ import Options.Applicative
 import Paths_chaostreff_scheduler (version)
 import Data.Version (showVersion)
 import Text.Read
-import Data.Time
+import Data.Time hiding (Year)
 import AppCfg
 
 
