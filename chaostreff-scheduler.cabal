@@ -18,7 +18,6 @@ executable chaostreff-scheduler
       AppCfg
       Args
       ChaostreffScheduler
-      DayOfWeek
       Event
       Git
       Lektor
