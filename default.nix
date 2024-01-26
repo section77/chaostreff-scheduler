@@ -1,10 +1,10 @@
 let
 
   pkgs = import (builtins.fetchGit {
-    name = "nixos-23.05";
+    name = "nixos-23.11";
     url = "https://github.com/nixos/nixpkgs/";
-    ref = "refs/heads/nixos-23.05";
-    rev = "9790f3242da2152d5aa1976e3e4b8b414f4dd206";
+    ref = "refs/heads/nixos-23.11";
+    rev = "a77ab169a83a4175169d78684ddd2e54486ac651";
     }) {};
 
   drv = pkgs.haskellPackages.developPackage {
